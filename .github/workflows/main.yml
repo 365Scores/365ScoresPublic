@@ -1,0 +1,28 @@
+name: Replace Variable and Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  process-env:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [Production, Staging]
+
+    environment: ${{ matrix.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read and replace variable in file
+        run: |
+          VAR_VALUE="${{ env.VARIABLE }}"
+          sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: output-${{ matrix.environment }}
+          path: output_${{ matrix.environment }}.txt
