@@ -19,6 +19,8 @@ jobs:
       - name: Read and replace variable in file
         run: |
           VAR_VALUE="${{ env.VARIABLE }}"
+          echo ${{ env.VARIABLE }}
+          echo ${{ VAR_VALUE }}
           sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
 
       - name: Upload artifact
