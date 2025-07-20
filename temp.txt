@@ -1,0 +1,3 @@
+text text text
+text __variable__ text
+text text text
