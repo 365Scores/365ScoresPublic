@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set VAR_VALUE
-        id: set_var
         run: |
           if [ "${{ matrix.environment }}" = "Production" ]; then
             echo "VAR_VALUE=${{ vars.PRODUCTION_VAR }}" >> $GITHUB_ENV
@@ -23,13 +22,11 @@ jobs:
             echo "VAR_VALUE=${{ vars.STAGING_VAR }}" >> $GITHUB_ENV
           fi
 
-      - name: Print environment variables
-        run: env
+      - name: Print VAR_VALUE
+        run: echo "VAR_VALUE is $VAR_VALUE"
 
-      - name: Read and replace variable in file
-        run: |
-          echo "VAR_VALUE is: $VAR_VALUE"
-          sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
+      - name: Replace and output
+        run: sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
