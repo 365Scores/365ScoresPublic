@@ -9,13 +9,11 @@ jobs:
     strategy:
       matrix:
         environment: [Production, Staging]
-
+    env:
+      VAR_VALUE: ${{ matrix.environment == 'Production' && vars.PRODUCTION_VAR || vars.STAGING_VAR }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set VAR_VALUE
-        run: echo "VAR_VALUE=${{ matrix.environment == 'Production' && vars.PRODUCTION_VAR || vars.STAGING_VAR }}" >> $GITHUB_ENV
 
       - name: Print VAR_VALUE
         run: echo "VAR_VALUE is $VAR_VALUE"
