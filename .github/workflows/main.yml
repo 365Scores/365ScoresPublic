@@ -1,4 +1,4 @@
-name: Replace Variable and Upload
+ name: Replace Variable and Upload
 
 on:
   workflow_dispatch:
@@ -21,9 +21,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Print injected environment variable
-        run: echo "VARIABLE is: $VARIABLE"
 
       - name: Replace and output
         run: sed "s/__variable__/$VARIABLE/g" temp.txt > output_${{ github.event.inputs.target_env }}.txt
