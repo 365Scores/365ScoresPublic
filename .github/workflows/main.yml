@@ -15,12 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set VAR_VALUE
-        run: |
-          if [ "${{ matrix.environment }}" = "Production" ]; then
-            echo "VAR_VALUE=${{ vars.PRODUCTION_VAR }}" >> $GITHUB_ENV
-          else
-            echo "VAR_VALUE=${{ vars.STAGING_VAR }}" >> $GITHUB_ENV
-          fi
+        run: echo "VAR_VALUE=${{ matrix.environment == 'Production' && vars.PRODUCTION_VAR || vars.STAGING_VAR }}" >> $GITHUB_ENV
 
       - name: Print VAR_VALUE
         run: echo "VAR_VALUE is $VAR_VALUE"
