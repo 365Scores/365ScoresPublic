@@ -1,17 +1,24 @@
+name: Replace Variable and Upload
+
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        options:
-          - Production
-          - Staging
 
 jobs:
-  job:
+  process-env:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.event.inputs.environment }}
+    strategy:
+      matrix:
+        environment: [Production, Staging]
+    env:
+      VAR_VALUE: ${{ matrix.environment == 'Production' && vars.PRODUCTION_VAR || vars.STAGING_VAR }}
     steps:
-      - run: echo "VARIABLE is $VARIABLE"
-        # likely will still be empty
+      - uses: actions/checkout@v4
+
+      - run: echo "VAR_VALUE is $VAR_VALUE"
+
+      - run: sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: output-${{ matrix.environment }}
+          path: output_${{ matrix.environment }}.txt
