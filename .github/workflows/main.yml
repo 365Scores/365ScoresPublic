@@ -10,23 +10,20 @@ jobs:
       matrix:
         environment: [Production, Staging]
 
+    environment:
+      name: ${{ matrix.environment }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set VAR_VALUE
+      - name: Print injected environment variable
         run: |
-          if [ "${{ matrix.environment }}" = "Production" ]; then
-            echo "VAR_VALUE=${{ vars.PRODUCTION_VAR }}" >> $GITHUB_ENV
-          else
-            echo "VAR_VALUE=${{ vars.STAGING_VAR }}" >> $GITHUB_ENV
-          fi
-
-      - name: Print VAR_VALUE
-        run: echo "VAR_VALUE is $VAR_VALUE"
+          echo "VARIABLE is: $VARIABLE"
 
       - name: Replace and output
-        run: sed "s/__variable__/$VAR_VALUE/g" temp.txt > output_${{ matrix.environment }}.txt
+        run: |
+          sed "s/__variable__/$VARIABLE/g" temp.txt > output_${{ matrix.environment }}.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
