@@ -12,26 +12,27 @@ on:
           - michel
           - Production
           - Staging
-env:
-  koko: ${{ vars.ENVNAME }}
 
+env:
+  koko: ${{ vars.ENVNAME }} # ENVNAME must exist as a repo or environment variable
 
 jobs:
   demo:
     runs-on: ubuntu-latest
     environment:
-      name: michel
+      name: ${{ github.event.inputs.environment }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Print injected environment variable
         run: |
           echo "VARIABLE is: $koko"
           echo "Var2 is: ${{ env.koko }}"
           env | grep koko || true
-          
 
       - name: Replace and output
         run: |
-          sed "s/__variable__/$VARIABLE/g" temp.txt > output_${{ github.event.inputs.environment }}.txt
+          sed "s/__variable__/$koko/g" temp.txt > output_${{ github.event.inputs.environment }}.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
