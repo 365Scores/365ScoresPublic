@@ -12,6 +12,9 @@ on:
           - michel
           - Production
           - Staging
+env:
+  koko: ${{ vars.ENVNAME }}
+
 
 jobs:
   demo:
@@ -21,9 +24,9 @@ jobs:
     steps:
       - name: Print injected environment variable
         run: |
-          echo "VARIABLE is: $ENVNAME"
-          echo "Var2 is: ${{ env.ENVNAME }}"
-          env | grep ENVNAME || true
+          echo "VARIABLE is: $koko"
+          echo "Var2 is: ${{ env.koko }}"
+          env | grep koko || true
           
 
       - name: Replace and output
