@@ -13,28 +13,26 @@ on:
           - Production
           - Staging
 
-# ENV_LABEL should be defined as a repository/environment variable per environment!
 env:
-  ENV_LABEL: ${{ vars.ENV_LABEL }}
+  EnvName: ${{ vars.ENVNAME }} # ENVNAME must exist as a repo or environment variable
 
 jobs:
   demo:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Print injected environment variable
         run: |
-          echo "ENV_LABEL (from environment/repo vars) is: $ENV_LABEL"
-          env | grep ENV_LABEL || true
+          echo "VARIABLE is: $EnvName"
+          echo "Var2 is: ${{ env.EnvName }}"
+          env | grep koko || true
 
-      - name: Replace placeholder in file
+      - name: Replace and output
         run: |
-          sed "s/__variable__/$ENV_LABEL/g" temp.txt > output_${{ github.event.inputs.environment }}.txt
+          sed "s/__variable__/$EnvName/g" temp.txt > output_${{ github.event.inputs.environment }}.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
