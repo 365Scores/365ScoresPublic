@@ -14,7 +14,7 @@ on:
           - Staging
 
 env:
-  EnvName: ${{ vars.ENVNAME }} # ENVNAME must exist as a repo or environment variable
+  EnvName: ${{ vars.VARIABLE }} # ENVNAME must exist as a repo or environment variable
 
 jobs:
   demo:
