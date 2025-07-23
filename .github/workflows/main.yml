@@ -6,9 +6,10 @@ on:
       environment:
         description: "Which environment?"
         required: true
-        default: "Production"
+        default: "michel"
         type: choice
         options:
+          - michel
           - Production
           - Staging
 
@@ -16,12 +17,14 @@ jobs:
   demo:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event.inputs.environment }}
+      name: michel
     steps:
       - name: Print injected environment variable
         run: |
-          echo "VARIABLE is: $VARIABLE"
-          env | grep VARIABLE || true
+          echo "VARIABLE is: $ENVNAME"
+          echo "Var2 is: ${{ env.ENVNAME }}"
+          env | grep ENVNAME || true
+          
 
       - name: Replace and output
         run: |
