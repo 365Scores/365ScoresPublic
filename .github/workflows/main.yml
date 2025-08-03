@@ -8,17 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: michel
-    env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up michel's env var
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
-        run: |
-          echo "ENV_LABEL (michel) is: ${{ env.ENV_LABEL }}"
-          env | grep ENV_LABEL || true
+
+      - name: Show all variables for debug
+        run: printenv | sort
+
       - name: Replace and output
         run: |
-          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_michel.txt
+          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_michel.txt
+          echo "Value used: ${{ vars.ENV_LABEL }}"
+          cat output_michel.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-michel
@@ -29,17 +29,17 @@ jobs:
     needs: michel
     environment:
       name: Staging
-    env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up Staging's env var
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
-        run: |
-          echo "ENV_LABEL (Staging) is: ${{ env.ENV_LABEL }}"
-          env | grep ENV_LABEL || true
+
+      - name: Show all variables for debug
+        run: printenv | sort
+
       - name: Replace and output
         run: |
-          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_Staging.txt
+          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_Staging.txt
+          echo "Value used: ${{ vars.ENV_LABEL }}"
+          cat output_Staging.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Staging
@@ -50,17 +50,17 @@ jobs:
     needs: staging
     environment:
       name: Production
-    env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up Production's env var
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
-        run: |
-          echo "ENV_LABEL (Production) is: ${{ env.ENV_LABEL }}"
-          env | grep ENV_LABEL || true
+
+      - name: Show all variables for debug
+        run: printenv | sort
+
       - name: Replace and output
         run: |
-          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_Production.txt
+          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_Production.txt
+          echo "Value used: ${{ vars.ENV_LABEL }}"
+          cat output_Production.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Production
