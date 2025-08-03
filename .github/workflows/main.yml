@@ -3,22 +3,22 @@ name: Environment Variable Demo
 on:
   workflow_dispatch:
 
+env:
+  EnvName: ${{ vars.VARIABLE }} # Will resolve from repo variable at the global level
+
 jobs:
   michel:
     runs-on: ubuntu-latest
     environment:
-      name: michel
+      name: michel # Approval will be requested if set in GitHub UI
     steps:
       - uses: actions/checkout@v4
-
-      - name: Show all variables for debug
-        run: printenv | sort
-
-      - name: Replace and output
+      - name: Print injected environment variable
         run: |
-          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_michel.txt
-          echo "Value used: ${{ vars.ENV_LABEL }}"
-          cat output_michel.txt
+          echo "VARIABLE is: $EnvName"
+          echo "Var2 is: ${{ env.EnvName }}"
+      - name: Replace and output
+        run: sed "s/__variable__/$EnvName/g" temp.txt > output_michel.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-michel
@@ -28,18 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: michel
     environment:
-      name: Staging
+      name: Staging # Approval will be requested if set in GitHub UI
     steps:
       - uses: actions/checkout@v4
-
-      - name: Show all variables for debug
-        run: printenv | sort
-
-      - name: Replace and output
+      - name: Print injected environment variable
         run: |
-          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_Staging.txt
-          echo "Value used: ${{ vars.ENV_LABEL }}"
-          cat output_Staging.txt
+          echo "VARIABLE is: $EnvName"
+          echo "Var2 is: ${{ env.EnvName }}"
+      - name: Replace and output
+        run: sed "s/__variable__/$EnvName/g" temp.txt > output_Staging.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Staging
@@ -49,18 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: staging
     environment:
-      name: Production
+      name: Production # Approval will be requested if set in GitHub UI
     steps:
       - uses: actions/checkout@v4
-
-      - name: Show all variables for debug
-        run: printenv | sort
-
-      - name: Replace and output
+      - name: Print injected environment variable
         run: |
-          sed "s/__variable__/${{ vars.ENV_LABEL }}/g" temp.txt > output_Production.txt
-          echo "Value used: ${{ vars.ENV_LABEL }}"
-          cat output_Production.txt
+          echo "VARIABLE is: $EnvName"
+          echo "Var2 is: ${{ env.EnvName }}"
+      - name: Replace and output
+        run: sed "s/__variable__/$EnvName/g" temp.txt > output_Production.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Production
