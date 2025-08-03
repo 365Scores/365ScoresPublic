@@ -2,40 +2,63 @@ name: Environment Variable Demo
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Which environment?"
-        required: true
-        default: "michel"
-        type: choice
-        options:
-          - michel
-          - Production
-          - Staging
-
-env:
-  EnvName: ${{ vars.VARIABLE }} # ENVNAME must exist as a repo or environment variable
 
 jobs:
-  demo:
+  michel:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event.inputs.environment }}
+      name: michel
     steps:
       - uses: actions/checkout@v4
-
       - name: Print injected environment variable
         run: |
-          echo "VARIABLE is: $EnvName"
-          echo "Var2 is: ${{ env.EnvName }}"
-          env | grep koko || true
-
+          echo "VARIABLE (michel) is: $VARIABLE"
+          env | grep VARIABLE || true
       - name: Replace and output
         run: |
-          sed "s/__variable__/$EnvName/g" temp.txt > output_${{ github.event.inputs.environment }}.txt
-
+          sed "s/__variable__/$VARIABLE/g" temp.txt > output_michel.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: output-${{ github.event.inputs.environment }}
-          path: output_${{ github.event.inputs.environment }}.txt
+          name: output-michel
+          path: output_michel.txt
+
+  staging:
+    runs-on: ubuntu-latest
+    environment:
+      name: Staging
+    needs: michel
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print injected environment variable
+        run: |
+          echo "VARIABLE (Staging) is: $VARIABLE"
+          env | grep VARIABLE || true
+      - name: Replace and output
+        run: |
+          sed "s/__variable__/$VARIABLE/g" temp.txt > output_Staging.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: output-Staging
+          path: output_Staging.txt
+
+  production:
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    needs: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print injected environment variable
+        run: |
+          echo "VARIABLE (Production) is: $VARIABLE"
+          env | grep VARIABLE || true
+      - name: Replace and output
+        run: |
+          sed "s/__variable__/$VARIABLE/g" temp.txt > output_Production.txt
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: output-Production
+          path: output_Production.txt
