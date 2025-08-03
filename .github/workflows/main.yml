@@ -9,15 +9,16 @@ jobs:
     environment:
       name: michel
     env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}
+      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up michel's env var
     steps:
       - uses: actions/checkout@v4
       - name: Print injected environment variable
         run: |
-          echo "ENV_LABEL (michel) is: $ENV_LABEL"
+          echo "ENV_LABEL (michel) is: ${{ env.ENV_LABEL }}"
           env | grep ENV_LABEL || true
       - name: Replace and output
-        run: sed "s/__variable__/$ENV_LABEL/g" temp.txt > output_michel.txt
+        run: |
+          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_michel.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-michel
@@ -29,15 +30,16 @@ jobs:
     environment:
       name: Staging
     env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}
+      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up Staging's env var
     steps:
       - uses: actions/checkout@v4
       - name: Print injected environment variable
         run: |
-          echo "ENV_LABEL (Staging) is: $ENV_LABEL"
+          echo "ENV_LABEL (Staging) is: ${{ env.ENV_LABEL }}"
           env | grep ENV_LABEL || true
       - name: Replace and output
-        run: sed "s/__variable__/$ENV_LABEL/g" temp.txt > output_Staging.txt
+        run: |
+          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_Staging.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Staging
@@ -49,15 +51,16 @@ jobs:
     environment:
       name: Production
     env:
-      ENV_LABEL: ${{ vars.ENV_LABEL }}
+      ENV_LABEL: ${{ vars.ENV_LABEL }}    # <--- This picks up Production's env var
     steps:
       - uses: actions/checkout@v4
       - name: Print injected environment variable
         run: |
-          echo "ENV_LABEL (Production) is: $ENV_LABEL"
+          echo "ENV_LABEL (Production) is: ${{ env.ENV_LABEL }}"
           env | grep ENV_LABEL || true
       - name: Replace and output
-        run: sed "s/__variable__/$ENV_LABEL/g" temp.txt > output_Production.txt
+        run: |
+          sed "s/__variable__/${{ env.ENV_LABEL }}/g" temp.txt > output_Production.txt
       - uses: actions/upload-artifact@v4
         with:
           name: output-Production
