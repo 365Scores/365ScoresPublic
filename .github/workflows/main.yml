@@ -3,22 +3,28 @@ name: Environment Variable Demo
 on:
   workflow_dispatch:
 
-env:
-  EnvName: ${{ vars.VARIABLE }} # Will resolve from repo variable at the global level
-
 jobs:
   michel:
     runs-on: ubuntu-latest
     environment:
-      name: michel # Approval will be requested if set in GitHub UI
+      name: michel
+    env:
+      ENV_LABEL:  ${{ vars.VARIABLE }}   # from michel environment
+      ENV_LABEL2: ${{ vars.VARIABLE2 }}  # from michel environment
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
+
+      - name: Show values (debug)
         run: |
-          echo "VARIABLE is: $EnvName"
-          echo "Var2 is: ${{ env.EnvName }}"
-      - name: Replace and output
-        run: sed "s/__variable__/$EnvName/g" temp.txt > output_michel.txt
+          echo "ENV_LABEL:  ${{ env.ENV_LABEL }}"
+          echo "ENV_LABEL2: ${{ env.ENV_LABEL2 }}"
+
+      - name: Replace placeholders and output
+        run: |
+          sed -e "s|__variable__|${{ env.ENV_LABEL }}|g" \
+              -e "s|__variable2__|${{ env.ENV_LABEL2 }}|g" \
+              temp.txt > output_michel.txt
+
       - uses: actions/upload-artifact@v4
         with:
           name: output-michel
@@ -28,15 +34,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: michel
     environment:
-      name: Staging # Approval will be requested if set in GitHub UI
+      name: Staging
+    env:
+      ENV_LABEL:  ${{ vars.VARIABLE }}   # from Staging environment
+      ENV_LABEL2: ${{ vars.VARIABLE2 }}  # from Staging environment
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
+
+      - name: Show values (debug)
         run: |
-          echo "VARIABLE is: $EnvName"
-          echo "Var2 is: ${{ env.EnvName }}"
-      - name: Replace and output
-        run: sed "s/__variable__/$EnvName/g" temp.txt > output_Staging.txt
+          echo "ENV_LABEL:  ${{ env.ENV_LABEL }}"
+          echo "ENV_LABEL2: ${{ env.ENV_LABEL2 }}"
+
+      - name: Replace placeholders and output
+        run: |
+          sed -e "s|__variable__|${{ env.ENV_LABEL }}|g" \
+              -e "s|__variable2__|${{ env.ENV_LABEL2 }}|g" \
+              temp.txt > output_Staging.txt
+
       - uses: actions/upload-artifact@v4
         with:
           name: output-Staging
@@ -46,15 +61,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: staging
     environment:
-      name: Production # Approval will be requested if set in GitHub UI
+      name: Production
+    env:
+      ENV_LABEL:  ${{ vars.VARIABLE }}   # from Production environment
+      ENV_LABEL2: ${{ vars.VARIABLE2 }}  # from Production environment
     steps:
       - uses: actions/checkout@v4
-      - name: Print injected environment variable
+
+      - name: Show values (debug)
         run: |
-          echo "VARIABLE is: $EnvName"
-          echo "Var2 is: ${{ env.EnvName }}"
-      - name: Replace and output
-        run: sed "s/__variable__/$EnvName/g" temp.txt > output_Production.txt
+          echo "ENV_LABEL:  ${{ env.ENV_LABEL }}"
+          echo "ENV_LABEL2: ${{ env.ENV_LABEL2 }}"
+
+      - name: Replace placeholders and output
+        run: |
+          sed -e "s|__variable__|${{ env.ENV_LABEL }}|g" \
+              -e "s|__variable2__|${{ env.ENV_LABEL2 }}|g" \
+              temp.txt > output_Production.txt
+
       - uses: actions/upload-artifact@v4
         with:
           name: output-Production
