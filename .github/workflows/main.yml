@@ -1,80 +1,99 @@
-name: Step Selector (Production, 2 vars, fail once)
+name: Production Step Graph (2 vars, fail Test once)
 
 on:
   workflow_dispatch:
     inputs:
       run_build:
-        description: "Run Build step?"
-        required: true
+        description: "Run Build?"
         type: boolean
+        required: true
         default: true
       run_test:
-        description: "Run Test step? (fails first attempt to demo rerun)"
-        required: true
+        description: "Run Test? (fails on first attempt to demo rerun)"
         type: boolean
+        required: true
         default: true
       run_deploy:
-        description: "Run Deploy step?"
-        required: true
+        description: "Run Deploy?"
         type: boolean
+        required: true
         default: true
 
 jobs:
-  pipeline:
+  build:
+    if: ${{ inputs.run_build == true }}
     runs-on: ubuntu-latest
     environment:
-      name: Production   # Approval happens here if you set Required reviewers
+      name: Production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure temp.txt exists
+        run: |
+          ls -la
+          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
+      - name: Build
+        run: |
+          echo "Building…"
+          echo "BUILD_OK" > build.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-outputs
+          path: build.txt
 
+  test:
+    needs: [build]
+    # allow Test to run if Build was skipped (user unchecked it)
+    if: ${{ inputs.run_test == true && (needs.build.result == 'success' || inputs.run_build != true) }}
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test (fails on FIRST attempt only)
+        run: |
+          echo "Running tests… attempt=$GITHUB_RUN_ATTEMPT"
+          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
+            echo "Intentionally failing to demo 'Re-run failed jobs'."
+            exit 1
+          fi
+          echo "TESTS_OK" > tests.txt
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: test-outputs
+          path: tests.txt
+          if-no-files-found: ignore
+
+  deploy:
+    needs: [test]
+    # allow Deploy to run if Test was skipped (user unchecked it)
+    if: ${{ inputs.run_deploy == true && (needs.test.result == 'success' || inputs.run_test != true) }}
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show selected inputs
+      - name: Show Production variables (from environment)
         run: |
-          echo "run_build=${{ inputs.run_build }}"
-          echo "run_test=${{ inputs.run_test }}"
-          echo "run_deploy=${{ inputs.run_deploy }}"
-          echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
+          echo "VARIABLE:  ${{ vars.VARIABLE }}"
+          echo "VARIABLE2: ${{ vars.VARIABLE2 }}"
 
-      - name: Ensure input file exists (temp.txt)
+      - name: Ensure temp.txt exists
         run: |
           ls -la
           test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
 
-      - name: Build
-        if: ${{ inputs.run_build == true }}
+      - name: Deploy (replace placeholders with Production vars)
         run: |
-          echo "Building…"
-          echo "BUILD_OK" > build.txt
-
-      - name: Test (fails on first attempt only)
-        if: ${{ inputs.run_test == true }}
-        run: |
-          echo "Running tests… attempt=$GITHUB_RUN_ATTEMPT"
-          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
-            echo "Intentionally failing on first attempt to demo 'Rerun failed job'."
-            exit 1
-          fi
-          echo "TESTS_OK" > tests.txt
-
-      - name: Deploy (replace placeholders using Production env vars)
-        if: ${{ inputs.run_deploy == true }}
-        run: |
-          echo "Resolved VARIABLE:  ${{ vars.VARIABLE }}"
-          echo "Resolved VARIABLE2: ${{ vars.VARIABLE2 }}"
-          # Replace both placeholders. Use '|' delimiter to avoid issues with URLs.
+          # Use expression values directly so we aren't affected by shell env injection quirks
           sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
               -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
               temp.txt > output_production.txt
-          echo "Output file:"
+          echo "Output:"
           cat output_production.txt
 
-      - name: Upload artifacts (always)
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: production-run
-          path: |
-            build.txt
-            tests.txt
-            output_production.txt
-          if-no-files-found: ignore
+          name: deploy-outputs
+          path: output_production.txt
