@@ -1,4 +1,4 @@
-name: Production Step Graph (2 vars, fail Test once)
+name: Production Step Graph (pick steps, 2 vars, fail Test once)
 
 on:
   workflow_dispatch:
@@ -41,9 +41,7 @@ jobs:
           path: build.txt
 
   test:
-    needs: [build]
-    # allow Test to run if Build was skipped (user unchecked it)
-    if: ${{ inputs.run_test == true && (needs.build.result == 'success' || inputs.run_build != true) }}
+    if: ${{ inputs.run_test == true }}
     runs-on: ubuntu-latest
     environment:
       name: Production
@@ -65,9 +63,7 @@ jobs:
           if-no-files-found: ignore
 
   deploy:
-    needs: [test]
-    # allow Deploy to run if Test was skipped (user unchecked it)
-    if: ${{ inputs.run_deploy == true && (needs.test.result == 'success' || inputs.run_test != true) }}
+    if: ${{ inputs.run_deploy == true }}
     runs-on: ubuntu-latest
     environment:
       name: Production
@@ -86,7 +82,6 @@ jobs:
 
       - name: Deploy (replace placeholders with Production vars)
         run: |
-          # Use expression values directly so we aren't affected by shell env injection quirks
           sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
               -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
               temp.txt > output_production.txt
