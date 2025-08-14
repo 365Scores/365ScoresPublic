@@ -1,57 +1,47 @@
-name: Production Step Graph (pick steps, queued, 2 vars, fail Test once)
+name: Production – Approve Per Step (2 vars, fail Test once)
 
 on:
   workflow_dispatch:
-    inputs:
-      run_build:
-        description: "Run Build?"
-        type: boolean
-        required: true
-        default: true
-      run_test:
-        description: "Run Test? (fails on first attempt to demo rerun)"
-        type: boolean
-        required: true
-        default: true
-      run_deploy:
-        description: "Run Deploy?"
-        type: boolean
-        required: true
-        default: true
 
-# One-at-a-time execution across all jobs in this workflow (same group)
+# Ensure only one job from this workflow runs at a time.
+# Even if you approve multiple jobs, the next one will queue until the current finishes.
 concurrency:
   group: production-manual-queue
   cancel-in-progress: false
 
 jobs:
   build:
-    if: ${{ inputs.run_build == true }}
+    # Appears as a separate box and waits for Production approval.
     runs-on: ubuntu-latest
     environment:
-      name: Production   # approval required here (per job)
+      name: Production
     steps:
       - uses: actions/checkout@v4
+
       - name: Ensure temp.txt exists
         run: |
           ls -la
           test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
+
       - name: Build
         run: |
           echo "Building…"
           echo "BUILD_OK" > build.txt
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: build-outputs
           path: build.txt
 
   test:
-    if: ${{ inputs.run_test == true }}
+    # Independent job: also waits for Production approval.
     runs-on: ubuntu-latest
     environment:
-      name: Production   # approval required here (per job)
+      name: Production
     steps:
       - uses: actions/checkout@v4
+
       - name: Test (fails on FIRST attempt only)
         run: |
           echo "Running tests… attempt=$GITHUB_RUN_ATTEMPT"
@@ -60,22 +50,24 @@ jobs:
             exit 1
           fi
           echo "TESTS_OK" > tests.txt
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload test artifact (always)
         if: ${{ always() }}
+        uses: actions/upload-artifact@v4
         with:
           name: test-outputs
           path: tests.txt
           if-no-files-found: ignore
 
   deploy:
-    if: ${{ inputs.run_deploy == true }}
+    # Independent job: also waits for Production approval.
     runs-on: ubuntu-latest
     environment:
-      name: Production   # approval required here (per job)
+      name: Production
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show Production variables (from environment)
+      - name: Show Production variables
         run: |
           echo "VARIABLE:  ${{ vars.VARIABLE }}"
           echo "VARIABLE2: ${{ vars.VARIABLE2 }}"
@@ -87,13 +79,15 @@ jobs:
 
       - name: Deploy (replace placeholders with Production vars)
         run: |
+          # Use '|' as sed delimiter so URLs/paths work fine.
           sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
               -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
               temp.txt > output_production.txt
           echo "Output:"
           cat output_production.txt
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload deploy artifact
+        uses: actions/upload-artifact@v4
         with:
           name: deploy-outputs
           path: output_production.txt
