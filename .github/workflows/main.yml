@@ -1,4 +1,4 @@
-name: Production Step Graph (pick steps, 2 vars, fail Test once)
+name: Production Step Graph (pick steps, queued, 2 vars, fail Test once)
 
 on:
   workflow_dispatch:
@@ -19,12 +19,17 @@ on:
         required: true
         default: true
 
+# One-at-a-time execution across all jobs in this workflow (same group)
+concurrency:
+  group: production-manual-queue
+  cancel-in-progress: false
+
 jobs:
   build:
     if: ${{ inputs.run_build == true }}
     runs-on: ubuntu-latest
     environment:
-      name: Production
+      name: Production   # approval required here (per job)
     steps:
       - uses: actions/checkout@v4
       - name: Ensure temp.txt exists
@@ -44,7 +49,7 @@ jobs:
     if: ${{ inputs.run_test == true }}
     runs-on: ubuntu-latest
     environment:
-      name: Production
+      name: Production   # approval required here (per job)
     steps:
       - uses: actions/checkout@v4
       - name: Test (fails on FIRST attempt only)
@@ -66,7 +71,7 @@ jobs:
     if: ${{ inputs.run_deploy == true }}
     runs-on: ubuntu-latest
     environment:
-      name: Production
+      name: Production   # approval required here (per job)
     steps:
       - uses: actions/checkout@v4
 
