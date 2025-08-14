@@ -1,216 +1,99 @@
-name: Multi-Env Step Graph (fail Test once)
+name: Production Step Graph (2 vars, fail Test once)
 
 on:
   workflow_dispatch:
     inputs:
       run_build:
-        description: "Run Build in each env?"
+        description: "Run Build?"
         type: boolean
         required: true
         default: true
       run_test:
-        description: "Run Test in each env? (fails on first attempt)"
+        description: "Run Test? (fails on first attempt to demo rerun)"
         type: boolean
         required: true
         default: true
       run_deploy:
-        description: "Run Deploy in each env?"
+        description: "Run Deploy?"
         type: boolean
         required: true
         default: true
 
-# -------------------------
-# michel
-# -------------------------
 jobs:
-  michel_build:
-    if: ${{ inputs.run_build == true }}
-    runs-on: ubuntu-latest
-    environment:
-      name: michel
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          ls -la
-          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
-      - name: Build (michel)
-        run: |
-          echo "BUILD_OK (michel)" > build_michel.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: michel-build
-          path: build_michel.txt
-
-  michel_test:
-    needs: [michel_build]
-    if: ${{ inputs.run_test == true && (needs.michel_build.result == 'success' || inputs.run_build != true) }}
-    runs-on: ubuntu-latest
-    environment:
-      name: michel
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test (michel) – fails on first attempt
-        run: |
-          echo "Running michel tests… attempt=$GITHUB_RUN_ATTEMPT"
-          if [ "$GITHUB_RUN_ATTEMPT" = "1" ]; then
-            echo "Intentionally failing to demo 'Re-run failed jobs'."
-            exit 1
-          fi
-          echo "TESTS_OK (michel)" > tests_michel.txt
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: michel-test
-          path: tests_michel.txt
-          if-no-files-found: ignore
-
-  michel_deploy:
-    needs: [michel_test]
-    if: ${{ inputs.run_deploy == true && (needs.michel_test.result == 'success' || inputs.run_test != true) }}
-    runs-on: ubuntu-latest
-    environment:
-      name: michel
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy (michel)
-        run: |
-          sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
-              -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
-              temp.txt > output_michel.txt
-          echo "michel VARIABLE=${{ vars.VARIABLE }}"
-          echo "michel VARIABLE2=${{ vars.VARIABLE2 }}"
-          cat output_michel.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: michel-deploy
-          path: output_michel.txt
-
-# -------------------------
-# Staging (depends on michel)
-# -------------------------
-  staging_build:
-    needs: [michel_deploy]
-    if: ${{ inputs.run_build == true }}
-    runs-on: ubuntu-latest
-    environment:
-      name: Staging
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          ls -la
-          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
-      - name: Build (Staging)
-        run: echo "BUILD_OK (staging)" > build_staging.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: staging-build
-          path: build_staging.txt
-
-  staging_test:
-    needs: [staging_build]
-    if: ${{ inputs.run_test == true && (needs.staging_build.result == 'success' || inputs.run_build != true) }}
-    runs-on: ubuntu-latest
-    environment:
-      name: Staging
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test (Staging) – fails on first attempt
-        run: |
-          echo "Running staging tests… attempt=$GITHUB_RUN_ATTEMPT"
-          if [ "$GITHUB_RUN_ATTEMPT" = "1" ]; then
-            echo "Intentionally failing to demo 'Re-run failed jobs'."
-            exit 1
-          fi
-          echo "TESTS_OK (staging)" > tests_staging.txt
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: staging-test
-          path: tests_staging.txt
-          if-no-files-found: ignore
-
-  staging_deploy:
-    needs: [staging_test]
-    if: ${{ inputs.run_deploy == true && (needs.staging_test.result == 'success' || inputs.run_test != true) }}
-    runs-on: ubuntu-latest
-    environment:
-      name: Staging
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy (Staging)
-        run: |
-          sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
-              -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
-              temp.txt > output_staging.txt
-          echo "staging VARIABLE=${{ vars.VARIABLE }}"
-          echo "staging VARIABLE2=${{ vars.VARIABLE2 }}"
-          cat output_staging.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: staging-deploy
-          path: output_staging.txt
-
-# -------------------------
-# Production (depends on Staging)
-# -------------------------
-  production_build:
-    needs: [staging_deploy]
+  build:
     if: ${{ inputs.run_build == true }}
     runs-on: ubuntu-latest
     environment:
       name: Production
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: Ensure temp.txt exists
+        run: |
           ls -la
           test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
-      - name: Build (Production)
-        run: echo "BUILD_OK (production)" > build_production.txt
+      - name: Build
+        run: |
+          echo "Building…"
+          echo "BUILD_OK" > build.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: production-build
-          path: build_production.txt
+          name: build-outputs
+          path: build.txt
 
-  production_test:
-    needs: [production_build]
-    if: ${{ inputs.run_test == true && (needs.production_build.result == 'success' || inputs.run_build != true) }}
+  test:
+    needs: [build]
+    # allow Test to run if Build was skipped (user unchecked it)
+    if: ${{ inputs.run_test == true && (needs.build.result == 'success' || inputs.run_build != true) }}
     runs-on: ubuntu-latest
     environment:
       name: Production
     steps:
       - uses: actions/checkout@v4
-      - name: Test (Production) – fails on first attempt
+      - name: Test (fails on FIRST attempt only)
         run: |
-          echo "Running production tests… attempt=$GITHUB_RUN_ATTEMPT"
-          if [ "$GITHUB_RUN_ATTEMPT" = "1" ]; then
+          echo "Running tests… attempt=$GITHUB_RUN_ATTEMPT"
+          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
             echo "Intentionally failing to demo 'Re-run failed jobs'."
             exit 1
           fi
-          echo "TESTS_OK (production)" > tests_production.txt
+          echo "TESTS_OK" > tests.txt
       - uses: actions/upload-artifact@v4
         if: ${{ always() }}
         with:
-          name: production-test
-          path: tests_production.txt
+          name: test-outputs
+          path: tests.txt
           if-no-files-found: ignore
 
-  production_deploy:
-    needs: [production_test]
-    if: ${{ inputs.run_deploy == true && (needs.production_test.result == 'success' || inputs.run_test != true) }}
+  deploy:
+    needs: [test]
+    # allow Deploy to run if Test was skipped (user unchecked it)
+    if: ${{ inputs.run_deploy == true && (needs.test.result == 'success' || inputs.run_test != true) }}
     runs-on: ubuntu-latest
     environment:
       name: Production
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy (Production)
+
+      - name: Show Production variables (from environment)
         run: |
+          echo "VARIABLE:  ${{ vars.VARIABLE }}"
+          echo "VARIABLE2: ${{ vars.VARIABLE2 }}"
+
+      - name: Ensure temp.txt exists
+        run: |
+          ls -la
+          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
+
+      - name: Deploy (replace placeholders with Production vars)
+        run: |
+          # Use expression values directly so we aren't affected by shell env injection quirks
           sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
               -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
               temp.txt > output_production.txt
-          echo "production VARIABLE=${{ vars.VARIABLE }}"
-          echo "production VARIABLE2=${{ vars.VARIABLE2 }}"
+          echo "Output:"
           cat output_production.txt
+
       - uses: actions/upload-artifact@v4
         with:
-          name: production-deploy
+          name: deploy-outputs
           path: output_production.txt
