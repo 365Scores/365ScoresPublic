@@ -3,21 +3,18 @@ name: next (forwards to nextnext)
 on:
   workflow_call:
     inputs:
-      file_path:
+      environment:
         type: string
-        required: true
-    secrets:
-      TEXT_VAR:
-        required: true
 
 jobs:
   print_values:
+    environment: ${{inputs.environment}}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Print env vars
         run: |
           echo "The secret is:"+"${{ secrets.TEXT_VAR }}"
-          echo "The var is:"+"${{ env.TEST_VAR }}"
+          echo "The var is:"+"${{ vars.TEST_VAR }}"
   call_nextnext:
     uses: ./.github/workflows/nextnext.yml
     secrets:

@@ -6,14 +6,21 @@ on:
 jobs:
   print_values:
     runs-on: ubuntu-latest
+    environment: PROD
     steps:
       - name: Checkout
         run: |
           echo "The secret is:"+"${{ secrets.TEXT_VAR }}"
-          echo "The var is:"+"${{ env.TEST_VAR }}"
+          echo "The var is:"+"${{ vars.TEST_VAR }}"
   call-workflow:
     uses: ./.github/workflows/next.yml
     secrets:
       inherit
     with:
-      file_path: temp.txt
+      environment: PROD
+  call-workflow-org:
+    uses: ./.github/workflows/next.yml
+    secrets:
+      inherit
+    with:
+      environment: michel
