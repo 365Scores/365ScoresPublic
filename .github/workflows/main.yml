@@ -5,23 +5,8 @@ on:
 
 jobs:
   run:
-    # NOTE: environment+uses may not be allowed on some plans.
-    # If GitHub complains, use the commented "fallback" below.
-    environment:
-      name: PROD
     uses: ./.github/workflows/next.yml
     secrets:
-      # Pull the value from Environment: PROD (secret must be named TEXT_VAR)
-      TEXT_VAR: ${{ secrets.TEXT_VAR }}
+      TEXT_VAR: ${{ secrets.TEXT_VAR_PROD }}
     with:
       file_path: temp.txt
-
-    # --- Fallback if your org disallows environment+uses on a job ---
-    # If you hit "Required property runs-on" etc., comment the block above
-    # and UNCOMMENT this block AFTER creating a repo-level secret TEXT_VAR_PROD.
-    #
-    # uses: ./.github/workflows/next.yml
-    # secrets:
-    #   TEXT_VAR: ${{ secrets.TEXT_VAR_PROD }}
-    # with:
-    #   file_path: temp.txt
