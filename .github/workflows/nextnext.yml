@@ -11,7 +11,7 @@ on:
         required: true
 
 permissions:
-  contents: write   # needed to push the change
+  contents: write   # needed to push changes
 
 jobs:
   apply_and_commit:
@@ -26,8 +26,7 @@ jobs:
           set -euo pipefail
           FILE="${{ inputs.file_path }}"
           VAL="${{ secrets.TEXT_VAR }}"
-          # Escape slashes for sed and replace __variable__
-          SAFE_VAL="${VAL//\//\\/}"
+          SAFE_VAL="${VAL//\//\\/}"      # escape slashes for sed
           sed -i 's/__variable__/'"$SAFE_VAL"'/g' "$FILE"
 
       - name: Commit & push
