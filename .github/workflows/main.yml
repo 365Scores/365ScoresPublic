@@ -1,80 +1,27 @@
-name: Production – Approve Per Step (separate envs, 2 vars, fail Test once)
+name: PROD (call next)
 
 on:
   workflow_dispatch:
 
-concurrency:
-  group: prod-manual-queue
-  cancel-in-progress: false
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  run:
+    # NOTE: environment+uses may not be allowed on some plans.
+    # If GitHub complains, use the commented "fallback" below.
     environment:
-      name: Prod-Build          # separate env -> separate approval
-    steps:
-      - uses: actions/checkout@v4
-      - name: Ensure temp.txt exists
-        run: |
-          ls -la
-          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
-      - name: Build
-        run: |
-          echo "Building…"
-          echo "BUILD_OK" > build.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-outputs
-          path: build.txt
+      name: PROD
+    uses: ./.github/workflows/next.yml
+    secrets:
+      # Pull the value from Environment: PROD (secret must be named TEXT_VAR)
+      TEXT_VAR: ${{ secrets.TEXT_VAR }}
+    with:
+      file_path: temp.txt
 
-  test:
-    runs-on: ubuntu-latest
-    environment:
-      name: Prod-Test           # separate env -> separate approval
-    steps:
-      - uses: actions/checkout@v4
-      - name: Test (fails on FIRST attempt only)
-        run: |
-          echo "Running tests… attempt=$GITHUB_RUN_ATTEMPT"
-          if [ "${GITHUB_RUN_ATTEMPT}" = "1" ]; then
-            echo "Intentionally failing to demo 'Re-run failed jobs'."
-            exit 1
-          fi
-          echo "TESTS_OK" > tests.txt
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: test-outputs
-          path: tests.txt
-          if-no-files-found: ignore
-
-  deploy:
-    runs-on: ubuntu-latest
-    environment:
-      name: Prod-Deploy         # separate env -> separate approval
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Show env variables (from this step’s environment)
-        run: |
-          echo "VARIABLE:  ${{ vars.VARIABLE }}"
-          echo "VARIABLE2: ${{ vars.VARIABLE2 }}"
-
-      - name: Ensure temp.txt exists
-        run: |
-          ls -la
-          test -f temp.txt || (echo "temp.txt missing at repo root" && exit 1)
-
-      - name: Deploy (replace placeholders using env vars)
-        run: |
-          # Use '|' delimiter so URLs/paths are safe
-          sed -e "s|__variable__|${{ vars.VARIABLE }}|g" \
-              -e "s|__variable2__|${{ vars.VARIABLE2 }}|g" \
-              temp.txt > output_production.txt
-          echo "Output:"
-          cat output_production.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: deploy-outputs
-          path: output_production.txt
+    # --- Fallback if your org disallows environment+uses on a job ---
+    # If you hit "Required property runs-on" etc., comment the block above
+    # and UNCOMMENT this block AFTER creating a repo-level secret TEXT_VAR_PROD.
+    #
+    # uses: ./.github/workflows/next.yml
+    # secrets:
+    #   TEXT_VAR: ${{ secrets.TEXT_VAR_PROD }}
+    # with:
+    #   file_path: temp.txt
