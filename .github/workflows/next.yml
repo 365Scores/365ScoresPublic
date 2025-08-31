@@ -11,9 +11,16 @@ on:
         required: true
 
 jobs:
+  print_values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        run: |
+          echo "The secret is:"+"${{ secrets.TEXT_VAR }}"
+          echo "The var is:"+"${{ env.TEST_VAR }}"
   call_nextnext:
-    uses: ./.github/workflows/nextnext.yml
+    uses: ./.github/workflows/nextnext.yml@nimrod_test
     secrets:
-      TEXT_VAR: ${{ secrets.TEXT_VAR }}
+      inherit
     with:
       file_path: ${{ inputs.file_path }}

@@ -14,31 +14,10 @@ permissions:
   contents: write   # needed to push changes
 
 jobs:
-  apply_and_commit:
+  print_values:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Replace __variable__ with secret value
-        shell: bash
         run: |
-          set -euo pipefail
-          FILE="${{ inputs.file_path }}"
-          VAL="${{ secrets.TEXT_VAR }}"
-          SAFE_VAL="${VAL//\//\\/}"      # escape slashes for sed
-          sed -i 's/__variable__/'"$SAFE_VAL"'/g' "$FILE"
-
-      - name: Commit & push
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "${{ inputs.file_path }}"
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-          git commit -m "nextnext: replace __variable__ via secret"
-          git push
+          echo "The var is:"+"${{ secrets.TEXT_VAR }}"
+          echo "The var is:"+"${{ env.TEST_VAR }}"
