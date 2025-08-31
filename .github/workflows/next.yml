@@ -19,7 +19,7 @@ jobs:
           echo "The secret is:"+"${{ secrets.TEXT_VAR }}"
           echo "The var is:"+"${{ env.TEST_VAR }}"
   call_nextnext:
-    uses: ./.github/workflows/nextnext.yml@nimrod_test
+    uses: ./.github/workflows/nextnext.yml
     secrets:
       inherit
     with:
