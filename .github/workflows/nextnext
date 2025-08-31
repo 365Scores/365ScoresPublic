@@ -1,0 +1,45 @@
+name: nextnext (apply and commit)
+
+on:
+  workflow_call:
+    inputs:
+      file_path:
+        type: string
+        required: true
+    secrets:
+      TEXT_VAR:
+        required: true
+
+permissions:
+  contents: write   # needed to push the change
+
+jobs:
+  apply_and_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Replace __variable__ with secret value
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE="${{ inputs.file_path }}"
+          VAL="${{ secrets.TEXT_VAR }}"
+          # Escape slashes for sed and replace __variable__
+          SAFE_VAL="${VAL//\//\\/}"
+          sed -i 's/__variable__/'"$SAFE_VAL"'/g' "$FILE"
+
+      - name: Commit & push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ inputs.file_path }}"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "nextnext: replace __variable__ via secret"
+          git push
