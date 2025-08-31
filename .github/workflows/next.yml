@@ -1,0 +1,19 @@
+name: next (forwards to nextnext)
+
+on:
+  workflow_call:
+    inputs:
+      file_path:
+        type: string
+        required: true
+    secrets:
+      TEXT_VAR:
+        required: true
+
+jobs:
+  call_nextnext:
+    uses: ./.github/workflows/nextnext.yml
+    secrets:
+      TEXT_VAR: ${{ secrets.TEXT_VAR }}
+    with:
+      file_path: ${{ inputs.file_path }}
