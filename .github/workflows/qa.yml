@@ -1,0 +1,13 @@
+name: QA (call next)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: ./.github/workflows/next.yml
+    secrets:
+      # Map the repo-level QA secret into the generic name expected downstream
+      TEXT_VAR: ${{ secrets.TEXT_VAR_QA }}
+    with:
+      file_path: temp.txt
